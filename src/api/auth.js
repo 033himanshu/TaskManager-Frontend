@@ -24,15 +24,16 @@ class Auth{
         return result
     }
     async logout(){
-        const result =  await apiCall(`${this.route}logout`, null, 'POST')
+        const result =  await apiCall(`${this.route}logout`, {}, 'POST')
         if(!result.error){
             console.log("Calling fuction")
             queryClient.invalidateQueries(['userProfile'])
+            queryClient.refetchQueries(['userProfile'])
         }
         return result
     }
     async refreshAccessToken(){
-        const result =  await apiCall(`${this.route}refresh-access-token`, null, 'POST')
+        const result =  await apiCall(`${this.route}refresh-access-token`, {}, 'POST')
         if(!result.error){
             console.log("Calling fuction")
             queryClient.invalidateQueries(['userProfile'])

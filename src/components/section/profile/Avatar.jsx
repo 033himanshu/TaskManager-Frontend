@@ -1,15 +1,19 @@
 import { useRef, useState } from "react"
 import { Pencil } from "lucide-react"
+import User from "@/api/user"
 
 export default function AvatarSection({ avatar }) {
   const fileRef = useRef(null)
   const [preview, setPreview] = useState(avatar)
 
-  const handleImageChange = (e) => {
-    const file = e.target.files[0]
+  const handleImageChange = async (e) => {
+    const file = e.target.files[0];
+
     if (file) {
-      setPreview(URL.createObjectURL(file))
-      // Call upload avatar mutation here
+      const formData = new FormData();
+      formData.append('avatar', file); // 'avatar' must match the key expected by your backend
+
+      await User.updateAvatar(formData); // This should send a multipart/form-data request
     }
   }
 

@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState } from "react"
@@ -6,97 +7,129 @@ import { z } from "zod"
 import { Button } from "@/components/ui/button"
 import Auth from "@/api/auth"
 import { useNavigate } from "react-router-dom"
-
+import { Card } from "@/components/ui/card"
+import { Separator } from "@/components/ui/separator"
+// import { GoogleLogo } from "@/components/icons"
+import { Link } from "react-router-dom"
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 
 export default function LoginForm() {
-  const [loginWith, setLoginWith] = useState("email")
+  const [loginMethod, setLoginMethod] = useState("email")
+  const [error, setError] = useState(null)
   const navigate = useNavigate()
-  
+
   const schema = z.object({
-    [loginWith]: loginWith === "email"
-      ? z.string().nonempty({ message: "Email is required" }).email({ message: "Email is invalid" })
-      : z.string().nonempty({ message: "Username is required" }).min(3, { message: "Username must be at least 3 characters" }),
-    password: z.string().nonempty({ message: "Password is required" }),
+    [loginMethod]: loginMethod === "email"
+      ? z.string().nonempty("Email is required").email("Invalid email format")
+      : z.string().nonempty("Username is required").min(3, "Username must be at least 3 characters"),
+    password: z.string().nonempty("Password is required")
   })
-  
+
   const fields = [
     {
-      name: loginWith,
-      label: loginWith === "email" ? "Email" : "Username",
-      placeholder: loginWith === "email" ? "e.g. john@example.com" : "e.g. john_doe",
-      type: loginWith === "email" ? "email" : "text",
+      name: loginMethod,
+      label: loginMethod === "email" ? "Email" : "Username",
+      placeholder: loginMethod === "email" ? "your@email.com" : "your_username",
+      type: loginMethod === "email" ? "email" : "text"
     },
     {
       name: "password",
       label: "Password",
       placeholder: "••••••••",
-      type: "password",
-    },
+      type: "password"
+    }
   ]
 
   const handleSubmit = async (data) => {
-    const payload = {
-      [loginWith]: data[loginWith],
-      password: data.password,
+    try {
+      const payload = {
+        [loginMethod]: data[loginMethod],
+        password: data.password
+      }
+      const result = await Auth.login(payload)
+      if (result?.error) {
+        setError(result.error)
+      } else {
+        navigate("/")
+      }
+    } catch (err) {
+      setError(err.message || "Login failed. Please try again.")
     }
-
-    return await Auth.login(payload)
   }
 
   const handleGoogleLogin = () => {
-    // Placeholder function for Google login integration
-    alert("Google Login not implemented yet.")
-  }
-
-  const defaultValues = {
-    email: '',
-    username: '',
-    password: '',
+    // Implement Google OAuth
+    window.location.href = `${import.meta.env.VITE_API_URL}/auth/google`
   }
 
   return (
-    <div className="bg-gray-50 flex justify-center items-center">
-      <div className="w-full max-w-xl bg-white p-8 rounded-lg shadow-lg flex flex-col">
-
-        <h2 className="text-3xl font-semibold text-center text-gray-800 mb-6">Login</h2>
-
-        {/* Login Option Toggle */}
-        <div className="flex justify-center gap-4 mb-6">
-          {["email", "username"].map((option) => (
-            <button
-              key={option}
-              onClick={() => setLoginWith(option)}
-              type="button"
-              className={`text-lg transition hover:text-blue-600 ${
-                loginWith === option
-                  ? "font-semibold underline underline-offset-4 text-blue-600"
-                  : "text-gray-600"
-              }`}
-            >
-              {option === "email" ? "Email" : "Username"}
-            </button>
-          ))}
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-purple-50 p-4">
+      <Card className="w-full max-w-md p-8 shadow-lg rounded-xl">
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Welcome Back</h1>
+          <p className="text-gray-600">Sign in to continue to your account</p>
         </div>
 
-        {/* Dynamic Form */}
+        {error && (
+          <Alert variant="destructive" className="mb-4">
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
+
+        <Button
+          variant="outline"
+          className="w-full mb-6"
+          onClick={handleGoogleLogin}
+        >
+          {/* <GoogleLogo className="w-5 h-5 mr-2" /> */}
+          Continue with Google
+        </Button>
+
+        <div className="flex items-center my-6">
+          <Separator className="flex-1" />
+          <span className="px-4 text-sm text-muted-foreground">OR</span>
+          <Separator className="flex-1" />
+        </div>
+
+        <Tabs 
+          value={loginMethod} 
+          onValueChange={setLoginMethod}
+          className="mb-6"
+        >
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="email">Email</TabsTrigger>
+            <TabsTrigger value="username">Username</TabsTrigger>
+          </TabsList>
+        </Tabs>
+
         <MyForm
-          key={loginWith} // important to reset form on toggle
+          key={loginMethod} // Important to reset form when switching methods
           schema={schema}
           fields={fields}
           onSubmit={handleSubmit}
-          buttonText="Login"
-          afterSubmit = {()=>navigate("/")}
-          defaultValues={defaultValues}
+          buttonText="Sign In"
         />
 
-        {/* Google Login Button */}
-        <Button
-          className="bg-red-600 text-white mt-4 justify-center hover:bg-red-500"
-          onClick={handleGoogleLogin}
-        >
-          Continue With Google
-        </Button>
-      </div>
+        <div className="mt-4 text-center text-sm">
+          <Link
+            to="/forgot-password"
+            className="text-primary hover:underline"
+          >
+            Forgot password?
+          </Link>
+        </div>
+
+        <p className="text-center text-sm text-muted-foreground mt-6">
+          Don't have an account?{" "}
+          <Link
+            to="/register"
+            className="font-medium text-primary hover:underline"
+          >
+            Sign up
+          </Link>
+        </p>
+      </Card>
     </div>
   )
 }

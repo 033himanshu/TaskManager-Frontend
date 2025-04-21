@@ -1,12 +1,12 @@
 import queryClient from '@/lib/react-query-client'
 import apiCall from './axios'
 
-class User{
+class Project{
     constructor(){
-        this.route = 'user/'
+        this.route = 'project/'
     }
-    async userProfile(){
-        return await apiCall(`${this.route}me`, {}, 'POST')
+    async allProjects(){
+        return await apiCall(`${this.route}all-projects`, {}, 'POST')
     }
     async updateProfile(data){
         const result = await apiCall(`${this.route}update-profile`, data, 'POST')
@@ -29,5 +29,5 @@ class User{
 }
 
 
-const user = new User()
-export default user
+const project = new Project()
+export default project
