@@ -2,9 +2,9 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.jsx'
-import {Home, Auth, Profile} from './pages/index.js'
+import {Home, Auth, Profile, ForgotPassword, ResetPassword, Project} from './pages/index.js'
 import { createBrowserRouter, RouterProvider } from 'react-router-dom'
-
+import { ErrorBoundary } from "@/components/ErrorBoundary"
 const router = createBrowserRouter([
   {
     path : '/',
@@ -15,12 +15,24 @@ const router = createBrowserRouter([
         element : <Home />,
       },
       {
+        path : '/auth/forgot-password',
+        element : <ForgotPassword/>,
+      },
+      {
+        path : '/auth/reset-password/:paramToken',
+        element : <ResetPassword/>,
+      },
+      {
         path : '/auth',
         element : <Auth/>,
       },
       {
         path : '/profile',
         element : <Profile />,
+      },
+      {
+        path : '/project/:projectId',
+        element : <Project />,
       },
       {
         path : '*',
@@ -33,10 +45,13 @@ import { QueryClientProvider } from '@tanstack/react-query';
 import queryClient from './lib/react-query-client';
 
 
+
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
-      <RouterProvider router={router} />
+      <ErrorBoundary>
+        <RouterProvider router={router} />
+      </ErrorBoundary>
     </QueryClientProvider>
   </StrictMode>,
 )

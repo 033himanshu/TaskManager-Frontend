@@ -6,33 +6,34 @@ import { formatDistanceToNow } from "date-fns"
 import { Plus, Users, Clock, ChevronRight } from "lucide-react"
 import MyForm from "@/components/forms/FormLayout"
 import { z } from "zod"
+import { useNavigate } from "react-router-dom"
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
+import Project from "@/api/project"
+import { projectSchema } from "@/Schema"
+import DialogBox from "@/components/forms/DialogBox"
 
-// Form validation schema
-const projectSchema = z.object({
-  name: z.string().min(3, "Project name must be at least 3 characters"),
-  description: z.string().optional(),
-})
+const defaultValues = {
+  name : "",
+  description : "",
+}
 
 export default function Home() {
-  const { data, isLoading, refetch } = useFetchAllProjects()
+  const navigate = useNavigate()
+  const { data, isLoading } = useFetchAllProjects()
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
-
-  const handleCreateProject = async (formData) => {
-    try {
-      // Add your API call to create project here
-      // await createProjectAPI(formData)
-      console.log("Creating project:", formData)
-      setIsCreateDialogOpen(false)
-      refetch() // Refresh the project list
-    } catch (error) {
-      console.error("Error creating project:", error)
-    }
+  const handleCreateProject = async (data) => {
+      console.log("Creating project:", data)
+      const result = await Project.createProject(data)
+      if (result?.error) {
+        return result
+      } else {
+        setIsCreateDialogOpen(false)
+      } 
   }
 
   return (
@@ -91,9 +92,9 @@ export default function Home() {
           {/* Projects */}
           {data?.projects?.map((project) => (
             <Card 
-              key={project.id} 
+              key={project._id} 
               className="hover:shadow-md transition-shadow cursor-pointer group"
-              onClick={() => console.log("Navigate to project", project.id)}
+              onClick={() => navigate(`/project/${project._id}`)}
             >
               <CardContent className="grid grid-cols-12 gap-4 p-4 items-center">
                 <div className="col-span-5 font-medium flex items-center">
@@ -106,7 +107,7 @@ export default function Home() {
                   {project.description || "No description"}
                 </div>
                 <div className="col-span-1 text-sm">
-                  {project.members || 0}
+                  {project.memberCnt || 0}
                 </div>
                 <div className="col-span-1 text-sm capitalize">
                   {project.role || "-"}
@@ -121,32 +122,29 @@ export default function Home() {
       )}
 
       {/* Create Project Dialog */}
-      <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Create New Project</DialogTitle>
-          </DialogHeader>
-          <MyForm
-            schema={projectSchema}
-            fields={[
-              {
-                name: "name",
-                label: "Project Name",
-                placeholder: "e.g. Marketing Campaign",
-              },
-              {
-                name: "description",
-                label: "Description (Optional)",
-                placeholder: "Briefly describe your project",
-                type: "textarea",
-              },
-            ]}
-            onSubmit={handleCreateProject}
-            buttonText="Create Project"
-            onCancel={() => setIsCreateDialogOpen(false)}
-          />
-        </DialogContent>
-      </Dialog>
+      <DialogBox  
+                isDialogOpen={isCreateDialogOpen} 
+                setIsDialogOpen={setIsCreateDialogOpen} 
+                title={'Create New Project'} 
+                schema={projectSchema} 
+                defaultValues={defaultValues} 
+                fields={[
+                  {
+                    name: "name",
+                    label: "Project Name",
+                    placeholder: "e.g. Marketing Campaign",
+                  },
+                  {
+                    name: "description",
+                    label: "Description (Optional)",
+                    placeholder: "Briefly describe your project",
+                    type: "textarea",
+                  },
+                ]} 
+                handleSubmit={handleCreateProject} 
+                buttonText={"Create Project"} 
+              />
+
     </div>
   )
 }

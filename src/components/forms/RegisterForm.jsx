@@ -66,6 +66,12 @@ const fields = [
     description: "8+ characters with uppercase, number, and special character",
   },
 ]
+const defaultValues ={
+  email : "",
+  password : "",
+  fullName : "",
+  username : "",
+}
 
 export default function RegisterForm() {
   const navigate = useNavigate()
@@ -105,6 +111,7 @@ export default function RegisterForm() {
         </div>
 
         <MyForm
+          defaultValues = {defaultValues}
           schema={schema}
           fields={fields}
           onSubmit={handleSubmit}

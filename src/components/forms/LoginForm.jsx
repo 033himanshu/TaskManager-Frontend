@@ -40,7 +40,10 @@ export default function LoginForm() {
       type: "password"
     }
   ]
-
+  const defaultValues ={
+      email : "",
+      password : "",
+    }
   const handleSubmit = async (data) => {
     try {
       const payload = {
@@ -104,6 +107,7 @@ export default function LoginForm() {
         </Tabs>
 
         <MyForm
+        defaultValues = {defaultValues}
           key={loginMethod} // Important to reset form when switching methods
           schema={schema}
           fields={fields}
@@ -113,7 +117,7 @@ export default function LoginForm() {
 
         <div className="mt-4 text-center text-sm">
           <Link
-            to="/forgot-password"
+            to="/auth/forgot-password"
             className="text-primary hover:underline"
           >
             Forgot password?

@@ -11,13 +11,18 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Button } from "@/components/ui/button"
 import { ChevronDown, Plus } from "lucide-react"
+import { useFetchProject } from "@/api/query/useProjectQuery"
+import { useNavigate } from "react-router-dom"
 
 export const ProjectDropdown = ({ projects = [] }) => {
-  const [selectedProject, setSelectedProject] = useState(projects[0] || "Select Project")
-
+  const [selectedProject, setSelectedProject] = useState("Select Project")
+  const navigate = useNavigate()
   const handleSelect = (project) => {
     setSelectedProject(project)
     // You might want to add project change logic here
+    if(project?._id){
+      navigate(`project/${project._id}`)
+    }
   }
 
   return (
@@ -27,7 +32,7 @@ export const ProjectDropdown = ({ projects = [] }) => {
           variant="outline"
           className="flex items-center gap-2 font-medium hover:bg-gray-50"
         >
-          <span className="truncate max-w-[120px]">{selectedProject}</span>
+          <span className="truncate max-w-[120px]">{selectedProject==="Select Project" ? "Select Project" : selectedProject.name}</span>
           <ChevronDown className="h-4 w-4 opacity-50" />
         </Button>
       </DropdownMenuTrigger>
@@ -40,7 +45,7 @@ export const ProjectDropdown = ({ projects = [] }) => {
           className="font-semibold"
           onClick={() => {}}
         >
-          {selectedProject}
+        {selectedProject==="Select Project" ? "" : selectedProject.name}
         </DropdownMenuItem>
 
         {projects.length > 0 && (
@@ -51,14 +56,14 @@ export const ProjectDropdown = ({ projects = [] }) => {
             </div>
             {projects
               .filter(project => project !== selectedProject)
-              .map((project, i) => (
+              .map((project) => (
                 <DropdownMenuItem
-                  key={i}
+                  key={project._id}
                   onClick={() => handleSelect(project)}
                   className="group"
                 >
                   <span className="group-hover:font-medium transition-all">
-                    {project}
+                    {project.name}
                   </span>
                 </DropdownMenuItem>
               ))
@@ -66,11 +71,7 @@ export const ProjectDropdown = ({ projects = [] }) => {
           </>
         )}
 
-        <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={() => { /* Add create project logic */ }}>
-          <Plus className="mr-2 h-4 w-4" />
-          Create New Project
-        </DropdownMenuItem>
+        
       </DropdownMenuContent>
     </DropdownMenu>
   )

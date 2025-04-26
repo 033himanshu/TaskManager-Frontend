@@ -8,12 +8,13 @@ import Auth from "@/api/auth"
 import PasswordUpdateForm from "@/components/section/profile/PasswordUpdateForm"
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
+import { useNavigate } from "react-router-dom"
 
 export default function Profile() {
   const { data: user, isLoading, isError, error } = useUserProfile()
   const [editMode, setEditMode] = useState(false)
   const [showPasswordForm, setShowPasswordForm] = useState(false)
-
+  const navigate = useNavigate()
   const handleResendVerification = async () => {
     await Auth.resendVerificationEmail()
     alert("Verification email sent!")
@@ -34,6 +35,7 @@ export default function Profile() {
             <Button 
               variant="destructive" 
               onClick={async () => {
+                
                 await Auth.logout()
                 navigate("/")
               }}
@@ -91,7 +93,7 @@ export default function Profile() {
                     </p>
                   </div>
                   <Separator />
-                  <PasswordUpdateForm />
+                  <PasswordUpdateForm formToggle={setShowPasswordForm}/>
                 </div>
               )}
             </div>

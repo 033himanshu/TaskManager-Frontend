@@ -15,13 +15,13 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { LogOut, User, Settings } from "lucide-react"
+import { useFetchAllProjects } from "@/api/query/useProjectQuery"
 
 export default function Header() {
   const navigate = useNavigate()
   const { data: user } = useUserProfile()
   const isLoggedIn = user?.fullName ? true : false
-  const projects = ['Project1', 'Project2']
-
+  const {data} = useFetchAllProjects()
   return (
     <header className="w-full px-6 py-3 bg-white border-b border-gray-100 shadow-sm sticky top-0 z-50">
       <div className="max-w-7xl mx-auto flex items-center justify-between">
@@ -36,14 +36,7 @@ export default function Header() {
           
           {isLoggedIn && (
             <nav className="hidden md:flex items-center space-x-6">
-              <ProjectDropdown projects={projects} />
-              <Button 
-                variant="ghost" 
-                className="text-gray-600 hover:text-gray-900 hover:bg-gray-50"
-                onClick={() => navigate("/dashboard")}
-              >
-                Dashboard
-              </Button>
+              <ProjectDropdown projects={data?.projects} />
             </nav>
           )}
         </div>
@@ -89,14 +82,7 @@ export default function Header() {
           ) : (
             <div className="flex space-x-3">
               <Button 
-                variant="ghost" 
-                className="hidden sm:inline-flex"
-                onClick={() => navigate("/auth?mode=login")}
-              >
-                Sign In
-              </Button>
-              <Button 
-                onClick={() => navigate("/auth?mode=register")}
+                onClick={() => navigate("/auth")}
                 className="bg-blue-600 hover:bg-blue-700"
               >
                 Get Started

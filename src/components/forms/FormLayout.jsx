@@ -26,7 +26,7 @@ export default function MyForm({
   defaultValues = {},
   buttonText = "Submit",
   className = "",
-  showResetAfterSubmit = false,
+  showResetAfterSubmit = true,
 }) {
   const form = useForm({
     resolver: zodResolver(schema),
