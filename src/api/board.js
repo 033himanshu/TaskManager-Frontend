@@ -10,7 +10,7 @@ class Board{
         if(!result.error){
             console.log(result)
             queryClient.setQueryData(['project', { id: projectId }], result)
-            queryClient.refetchQueries(['project', { id: projectId }])
+            // queryClient.refetchQueries(['project', { id: projectId }])
         }
         return result
     }
@@ -20,6 +20,16 @@ class Board{
         console.log(result)
         if(!result.error){
             queryClient.setQueryData(['project', { id: projectId }], result)
+            // queryClient.refetchQueries(['project', { id: projectId }])
+        }
+        return result
+    }
+    async updateBoardDetails({name, description, projectId, boardId}){
+        console.log({name, description, projectId, boardId})
+        const result = await apiCall(`${this.route}update-board-details`, {name, description, projectId, boardId}, 'PATCH')
+        console.log(result)
+        if(!result.error){
+            queryClient.setQueryData(['board', { bId: boardId, pId: projectId }], result)
             // queryClient.refetchQueries(['project', { id: projectId }])
         }
         return result

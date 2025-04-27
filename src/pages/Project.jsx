@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate, Outlet } from 'react-router-dom';
-import { DragDropContext, Droppable } from '@hello-pangea/dnd';
+import { DragDropContext, Draggable, Droppable } from '@hello-pangea/dnd';
 import { useFetchAllMember, useFetchProject, useFetchUserRole } from '@/api/query/useProjectQuery';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardContent, CardTitle, CardDescription } from '@/components/ui/card';
 import Board from '@/components/project/Board';
 import BoardApi from '@/api/board';
 import ProjectApi from '@/api/project';
+import TaskApi from '@/api/task';
 import DialogBox from '@/components/forms/DialogBox';
 import { boardSchema, projectSchema } from '@/Schema';
 import Member from '@/components/project/Member';
@@ -22,6 +23,8 @@ export default function Project() {
   console.log(projectMembers)
   const [localBoards, setLocalBoards] = useState(project?.boards ?? [])
   const [activeTab, setActiveTab] = useState('tasks');
+
+
   useEffect(()=>{
     if(project?.boards)
         setLocalBoards(project.boards)
@@ -46,23 +49,13 @@ export default function Project() {
         }
       } else if (type === 'TASK') {
         // Handle task reordering
-        if (source.droppableId === destination.droppableId) {
-          // Task moved within same board
-          await updateTaskPosition({
-            taskId: draggableId,
-            boardId: source.droppableId,
-            oldIndex: source.index,
-            newIndex: destination.index
-          });
-        } else {
-          // Task moved to different board
-          await moveTaskToBoard({
-            taskId: draggableId,
-            fromBoardId: source.droppableId,
-            toBoardId: destination.droppableId,
-            newIndex: destination.index
-          });
-        }
+        const result = await TaskApi.updateBoardAndPosition({
+              taskId: draggableId,
+              boardId: source.droppableId,
+              newBoardId: destination.droppableId,
+              newIndex: destination.index,
+              projectId,
+        })
       }
     } catch (err) {
       console.error('Failed to update position:', err);
@@ -158,7 +151,17 @@ export default function Project() {
                   className="flex space-x-4 min-h-[500px]"
                 >
                   {project?.boards?.map((boardId, index) => (
-                    <Board key={boardId} id={boardId} index={index}/>
+                    <Draggable draggableId={boardId} index={index}>
+                      {(provided) => (
+                          <div 
+                              ref={provided.innerRef}
+                              {...provided.draggableProps}
+                              className="w-72 flex-shrink-0"
+                          >
+                          <Board id={boardId} provided={provided}/>
+                      </div>
+                      )}
+                    </Draggable>
                   ))}
                   {provided.placeholder}
                   {role && role!=='member' && (<Button 
