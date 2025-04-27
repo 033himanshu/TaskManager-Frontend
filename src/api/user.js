@@ -13,7 +13,7 @@ class User{
         if(!result.error){
             console.log(result.user)
             queryClient.setQueryData(['userProfile'], result.user)
-            queryClient.refetchQueries(['userProfile'])
+            // queryClient.refetchQueries(['userProfile'])
         }
         return result
     }
@@ -34,7 +34,7 @@ class User{
         if(!result.error){
             console.log(result.user)
             queryClient.setQueryData(['userProfile'], result.user)
-            queryClient.refetchQueries(['userProfile'])
+            // queryClient.refetchQueries(['userProfile'])
         }
         return result
     }
@@ -43,7 +43,7 @@ class User{
         if(!result.error){
             console.log(result.user)
             queryClient.setQueryData(['userProfile'], result.user)
-            queryClient.refetchQueries(['userProfile'])
+            // queryClient.refetchQueries(['userProfile'])
         }
         return result
     }

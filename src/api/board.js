@@ -20,12 +20,12 @@ class Board{
         console.log(result)
         if(!result.error){
             queryClient.setQueryData(['project', { id: projectId }], result)
-            queryClient.refetchQueries(['project', { id: projectId }])
+            // queryClient.refetchQueries(['project', { id: projectId }])
         }
         return result
     }
     async boardDetails({projectId, boardId}){
-        console.log("api call",boardId)
+        console.log("api call", boardId)
         const result = await apiCall(`${this.route}get-board`, {projectId, boardId}, 'POST')
         if(!result.error){
             console.log(result)

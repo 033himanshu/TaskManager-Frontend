@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate, Outlet } from 'react-router-dom';
 import { DragDropContext, Droppable } from '@hello-pangea/dnd';
-import { useFetchProject } from '@/api/query/useProjectQuery';
+import { useFetchAllMember, useFetchProject, useFetchUserRole } from '@/api/query/useProjectQuery';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardContent, CardTitle, CardDescription } from '@/components/ui/card';
 import Board from '@/components/project/Board';
@@ -9,13 +9,17 @@ import BoardApi from '@/api/board';
 import ProjectApi from '@/api/project';
 import DialogBox from '@/components/forms/DialogBox';
 import { boardSchema, projectSchema } from '@/Schema';
+import Member from '@/components/project/Member';
 
 export default function Project() {
   const [isAddBoardDialogOpen, setIsAddBoardDialogOpen] = useState(false)
   const [isEditProjectDialogOpen, setIsEditProjectDialogOpen] = useState(false)
   const { projectId } = useParams();
+  const {data : role} = useFetchUserRole(projectId)
   const navigate = useNavigate();
   const { data: project, isLoading, error } = useFetchProject(projectId);
+  const {data : projectMembers} = useFetchAllMember(projectId)
+  console.log(projectMembers)
   const [localBoards, setLocalBoards] = useState(project?.boards ?? [])
   const [activeTab, setActiveTab] = useState('tasks');
   useEffect(()=>{
@@ -26,7 +30,7 @@ export default function Project() {
     if (!result.destination) return;
     
     const { source, destination, draggableId, type } = result;
-    
+    if(!role || role === 'member') return;
     try {
       if (type === 'BOARD') {
         const [removed] = localBoards.splice(source.index, 1)
@@ -97,14 +101,14 @@ export default function Project() {
 
   if (isLoading) return <div>Loading project...</div>;
   if (error) return <div>Error loading project: {error.message}</div>;
-
+  console.log(role)
   return (
     <div className="space-y-6">
       <div className='relative'>   
-        <div className='text-center text-2xl font-semibold'>{project.name}</div>
-        <div className='text-center text-xl font-normal'>{project.description}</div>
+        <div className='text-center text-2xl font-semibold'>{project?.name}</div>
+        <div className='text-center text-xl font-normal'>{project?.description}</div>
+        {role && role==='admin' && (
         <div className='absolute top-2 right-2'>
-          
               <Button className='text-xs '
                 onClick={() => setIsEditProjectDialogOpen(true)} 
                 >
@@ -116,7 +120,9 @@ export default function Project() {
                 Delete Project
               </Button>
           </div>
+        )}
       </div>
+
 
       {/* Navigation Tabs */}
       <div className="flex space-x-2">
@@ -155,13 +161,13 @@ export default function Project() {
                     <Board key={boardId} id={boardId} index={index}/>
                   ))}
                   {provided.placeholder}
-                  <Button 
+                  {role && role!=='member' && (<Button 
                     variant="outline" 
                     className="w-72 h-[500px] flex items-center justify-center"
                     onClick={()=>setIsAddBoardDialogOpen(true)}
                   >
                     + Add Board
-                  </Button>
+                  </Button>)}
                 </div>
               )}
             </Droppable>
@@ -171,7 +177,7 @@ export default function Project() {
 
       {activeTab === 'notes' && (
         <div className="space-y-4">
-          <Button onClick={() => navigate('notes/new')}>+ Add Note</Button>
+          {role && role!=='member' && (<Button onClick={() => navigate('notes/new')}>+ Add Note</Button>)}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {project?.notes?.map(note => (
               <Card key={note._id}>
@@ -180,13 +186,13 @@ export default function Project() {
                 </CardHeader>
                 <CardContent>
                   <p>{note.content}</p>
-                  <Button 
+                  {role && role!=='member' && (<Button 
                     variant="outline" 
                     className="mt-2"
                     onClick={() => navigate(`notes/${note._id}/edit`)}
                   >
                     Edit
-                  </Button>
+                  </Button>)}
                 </CardContent>
               </Card>
             ))}
@@ -197,10 +203,10 @@ export default function Project() {
 
       {activeTab === 'members' && (
         <div className="space-y-4">
-          <Button onClick={() => navigate('/members/invite')}>+ Invite Member</Button>
+          {role && role=='admin' && (<Button onClick={() => navigate('/members/invite')}>+ Invite Member</Button>)}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {project?.members?.map(member => (
-              <Member key={member._id} member={member}/>
+            {projectMembers?.members?.map(member => (
+              <Member key={member._id} memberId={member._id}/>
             ))}
           </div>
           {/* <Outlet context={{ members: project.members }} /> */}
@@ -239,8 +245,8 @@ export default function Project() {
           title={'Edit Project'} 
           schema={projectSchema} 
           defaultValues={{
-            name : project.name,
-            description : project.description,
+            name : project?.name,
+            description : project?.description,
           }} 
           fields={[
             {

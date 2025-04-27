@@ -9,8 +9,7 @@ export const useFetchBoardDetails = (boardId, projectId) => {
     queryKey: ['board', { bId: boardId, pId: projectId }], 
     queryFn: () => fetchBoardDetails(boardId, projectId),
     staleTime: 30 * 60 * 1000, 
-    enabled: !!(boardId && projectId), 
-    retry: 2,
+    enabled: !!(boardId && projectId),
   })
 }
 

@@ -65,7 +65,7 @@ const apiCall = async (route, payload = {}, method = "GET") => {
         response = await instance.get(route, { params: payload })
         break
       case "POST":
-        console.log(payload)
+        // console.log(payload)
         response = await instance.post(route, payload)
         break
       case "PATCH":
@@ -77,7 +77,7 @@ const apiCall = async (route, payload = {}, method = "GET") => {
       default:
         return { error: "Unsupported request method" }
     }
-    console.log(response)
+    // console.log(response)
     const { success, data, message } = response.data
 
     if (success) {

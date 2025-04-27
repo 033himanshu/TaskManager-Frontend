@@ -14,7 +14,7 @@ export default function Board({ id, index }) {
     if (!board) return null;
 
     return (
-        <Draggable draggableId={board._id} index={index}>
+        <Draggable draggableId={id} index={index}>
             {(provided) => (
                 <div 
                     ref={provided.innerRef}
@@ -66,6 +66,8 @@ export default function Board({ id, index }) {
                     </Card>
                 </div>
             )}
+            
         </Draggable>
+        
     );
 }
