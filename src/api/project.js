@@ -9,7 +9,7 @@ class Project{
         const result = await apiCall(`${this.route}all-projects`, {}, 'POST')
         if(!result?.error){
             result?.projects?.forEach(project => {
-                queryClient.setQueryData(['userRole', {pId : project._id}], project.role)
+                queryClient.setQueryData(['userRole', {pid : project._id}], project.role)
             })
         }
         return result

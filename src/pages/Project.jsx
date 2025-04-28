@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate, Outlet } from 'react-router-dom';
 import { DragDropContext, Draggable, Droppable } from '@hello-pangea/dnd';
 import { useFetchAllMember, useFetchProject, useFetchUserRole } from '@/api/query/useProjectQuery';
@@ -11,6 +11,7 @@ import TaskApi from '@/api/task';
 import DialogBox from '@/components/forms/DialogBox';
 import { boardSchema, projectSchema } from '@/Schema';
 import Member from '@/components/project/Member';
+import { Pencil, Trash2 } from 'lucide-react';
 
 export default function Project() {
   const [isAddBoardDialogOpen, setIsAddBoardDialogOpen] = useState(false)
@@ -24,43 +25,60 @@ export default function Project() {
   const [localBoards, setLocalBoards] = useState(project?.boards ?? [])
   const [activeTab, setActiveTab] = useState('tasks');
 
+  const contentRef = useRef(null);
+  const [headerHeight, setHeaderHeight] = useState(0);
+  useEffect(() => {
+    if (contentRef.current) {
+      const height = contentRef.current.offsetHeight;
+      setHeaderHeight(height);
+    }
+  }, [activeTab]);
+  // Calculate available height for boards
+  const availableHeight = `calc(100vh - ${headerHeight}px - 2rem)`; // 2rem for padding
 
   useEffect(()=>{
     if(project?.boards)
         setLocalBoards(project.boards)
   },[project?.boards])
-  const handleDragEnd = async (result) => {
+
+const handleDragEnd = async (result) => {
     if (!result.destination) return;
     
     const { source, destination, draggableId, type } = result;
     if(!role || role === 'member') return;
+
+    // Optimistic update
+    if (type === 'BOARD') {
+      const newBoards = [...localBoards];
+      const [removed] = newBoards.splice(source.index, 1);
+      newBoards.splice(destination.index, 0, removed);
+      setLocalBoards(newBoards);
+    }
+
     try {
       if (type === 'BOARD') {
-        const [removed] = localBoards.splice(source.index, 1)
-        localBoards.splice(destination.index, 0, removed)
-        setLocalBoards(localBoards)
-        const result = await board.updateBoardPosition({
+        await BoardApi.updateBoardPosition({
           projectId,
           boardId: draggableId,
           newIndex: destination.index
         });
-        if(result.error){
-          setLocalBoards(project.boards)
-        }
       } else if (type === 'TASK') {
-        // Handle task reordering
-        const result = await TaskApi.updateBoardAndPosition({
-              taskId: draggableId,
-              boardId: source.droppableId,
-              newBoardId: destination.droppableId,
-              newIndex: destination.index,
-              projectId,
-        })
+        await TaskApi.updateBoardAndPosition({
+          taskId: draggableId,
+          boardId: source.droppableId,
+          newBoardId: destination.droppableId,
+          newIndex: destination.index,
+          projectId,
+        });
       }
     } catch (err) {
+      // Revert on error
+      if (type === 'BOARD') {
+        setLocalBoards(project.boards);
+      }
       console.error('Failed to update position:', err);
     }
-  };
+};
   const handleEditProjectDetails = async (data) => {
     console.log("Edit Project", data)
     const result = await ProjectApi.updateProjectDetails({...data, projectId})
@@ -96,6 +114,7 @@ export default function Project() {
   if (error) return <div>Error loading project: {error.message}</div>;
   console.log(role)
   return (
+    
     <div className="space-y-6">
       <div className='relative'>   
         <div className='text-center text-2xl font-semibold'>{project?.name}</div>
@@ -105,12 +124,12 @@ export default function Project() {
               <Button className='text-xs '
                 onClick={() => setIsEditProjectDialogOpen(true)} 
                 >
-                Edit Project Details
+                <Pencil className="h-4 w-4" /> Project
               </Button>
-              <Button className='text-xs '
+              <Button className='text-xs bg-red-500'
                 onClick={handleProjectDelete} 
                 >
-                Delete Project
+                 <Trash2 className="h-4 w-4" /> Delete Project
               </Button>
           </div>
         )}
@@ -143,15 +162,15 @@ export default function Project() {
       {activeTab === 'tasks' && (
         <DragDropContext onDragEnd={handleDragEnd}>
           <div className="overflow-x-auto">
-            <Droppable droppableId="all-boards" direction="horizontal" type="BOARD">
+            <Droppable droppableId={projectId} direction="horizontal" type="BOARD">
               {(provided) => (
                 <div 
                   ref={provided.innerRef}
                   {...provided.droppableProps}
                   className="flex space-x-4 min-h-[500px]"
                 >
-                  {project?.boards?.map((boardId, index) => (
-                    <Draggable draggableId={boardId} index={index}>
+                  {localBoards?.map((boardId, index) => (
+                    <Draggable key={boardId} draggableId={boardId} index={index}>
                       {(provided) => (
                           <div 
                               ref={provided.innerRef}

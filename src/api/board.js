@@ -9,7 +9,7 @@ class Board{
         const result =  await apiCall(`${this.route}add-board`, {name, description, projectId}, 'POST')
         if(!result.error){
             console.log(result)
-            queryClient.setQueryData(['project', { id: projectId }], result)
+            queryClient.setQueryData(['project', { pId: projectId }], result)
             // queryClient.refetchQueries(['project', { id: projectId }])
         }
         return result
@@ -19,7 +19,7 @@ class Board{
         const result = await apiCall(`${this.route}update-board-position`, {boardId, newIndex, projectId}, 'PATCH')
         console.log(result)
         if(!result.error){
-            queryClient.setQueryData(['project', { id: projectId }], result)
+            queryClient.setQueryData(['project', { pid: projectId }], result)
             // queryClient.refetchQueries(['project', { id: projectId }])
         }
         return result

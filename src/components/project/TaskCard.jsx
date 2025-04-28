@@ -1,16 +1,17 @@
 import { Draggable, Droppable } from "@hello-pangea/dnd";
-import { Card, CardDescription, CardHeader, CardTitle } from "../ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card";
 import { Button } from "../ui/button";
 import { useParams } from "react-router-dom";
 import { useState } from "react";
 import { taskSchema } from "@/Schema";
-import BoardApi from "@/api/board";
 import TaskApi from "@/api/task";
 import DialogBox from "../forms/DialogBox";
 import { useFetchUserRole } from "@/api/query/useProjectQuery";
 import { useFetchTaskDetails } from "@/api/query/useTaskQuery";
 import { Dialog } from "@radix-ui/react-dialog"
 import { DialogContent, DialogHeader, DialogTitle, DialogDescription } from "../ui/dialog"
+import { Checkbox } from "@/components/ui/checkbox";
+import { Pencil, Trash2, Paperclip } from "lucide-react";
 
 export default function Task({ id , provided, boardId}) {
     const { projectId } = useParams();
@@ -32,19 +33,49 @@ export default function Task({ id , provided, boardId}) {
     if (!task) return null;
     return (
         <>
-            <Card className="h-full">
-                <CardHeader 
-                    {...provided.dragHandleProps}
-                    className="cursor-move bg-gray-50"
-                    // onClick={() => setSelectedBoard(board)}
-                >
-                    <CardTitle>{task.title}</CardTitle>
-                    <CardDescription>{task.description}</CardDescription>
-                    <CardDescription>{task._id}</CardDescription>
-                    <Button onClick={()=>setIsTaskDetailsOpen(true)}>Details</Button>
-                    {role && role!=='member' && (<Button onClick={()=>setIsEditTaskDialogOpen(true)}>Edit</Button>)}
+            <Card className="h-full hover:shadow-md transition-shadow">
+                <CardHeader className="p-4 space-y-2 my-[-10px]">
+                <div className="flex justify-between items-start">
+                    <CardTitle className="text-lg">{task.title}</CardTitle>
+                    {role && role !== 'member' && (
+                    <div className="flex space-x-2">
+                        <Button 
+                        variant="ghost" 
+                        size="icon"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            setIsEditTaskDialogOpen(true);
+                        }}
+                        >
+                        <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            if(confirm("Delete this task?")) {
+                            TaskApi.deleteTask({ projectId, boardId, taskId: id });
+                            }
+                        }}
+                        >
+                        <Trash2 className="h-4 w-4 text-red-500" />
+                        </Button>
+                    </div>
+                    )}
+                </div>
+                <CardDescription>{task.description}</CardDescription>
                 </CardHeader>
-                {/* Card Content Removed */}
+                
+                <CardContent className="p-1 pt-0 text-center">
+                <Button 
+                    variant="outline" 
+                    className="w-3/4 mt-1"
+                    onClick={() => setIsTaskDetailsOpen(true)}
+                >
+                    View Details
+                </Button>
+                </CardContent>
             </Card>
             <DialogBox  
                 isDialogOpen={isEditTaskDialogOpen} 

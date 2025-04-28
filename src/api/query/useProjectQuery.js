@@ -15,7 +15,7 @@ export const useFetchAllProjects = () => {
 }
 export const useFetchUserRole = (projectId) => {
   return useQuery({
-    queryKey: ['userRole', {pId : projectId}],
+    queryKey: ['userRole', {pid : projectId}],
     queryFn: ()=>"member",
     staleTime : Infinity,
     enabled: !!projectId, 
