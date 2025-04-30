@@ -38,12 +38,24 @@ class User{
         }
         return result
     }
-    async resendVerificationLink(){
-        const result = await apiCall(`${this.route}resend-email`, {}, 'POST')
-        if(!result.error){
-            console.log(result.user)
-            queryClient.setQueryData(['userProfile'], result.user)
-            // queryClient.refetchQueries(['userProfile'])
+    // async resendVerificationLink(){
+    //     const result = await apiCall(`${this.route}resend-email`, {}, 'POST')
+    //     if(!result.error){
+    //         console.log(result.user)
+    //         queryClient.setQueryData(['userProfile'], result.user)
+    //         // queryClient.refetchQueries(['userProfile'])
+    //     }
+    //     return result
+    // }
+    async resendVerificationToken(){
+        const result =  await apiCall(`${this.route}resend-email`, {}, 'POST')
+        return result
+    }
+    async getUserRoles(){
+        const result = await apiCall(`${this.route}user-roles`, {}, 'GET')
+        console.log(result)
+        if(!result?.error){
+            queryClient.setQueryData(['userRoles'], result.AvailableUserRoles)
         }
         return result
     }

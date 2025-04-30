@@ -5,6 +5,7 @@ import UserDetails from "@/components/section/profile/UserDetails"
 import AvatarSection from "@/components/section/profile/Avatar"
 import { Button } from "@/components/ui/button"
 import Auth from "@/api/auth"
+import User from "@/api/user"
 import PasswordUpdateForm from "@/components/section/profile/PasswordUpdateForm"
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
@@ -16,7 +17,7 @@ export default function Profile() {
   const [showPasswordForm, setShowPasswordForm] = useState(false)
   const navigate = useNavigate()
   const handleResendVerification = async () => {
-    await Auth.resendVerificationEmail()
+    await User.resendVerificationToken()
     alert("Verification email sent!")
   }
 

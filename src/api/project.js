@@ -69,6 +69,14 @@ class Project{
         }
         return result
     }
+    async addMemerToProject({ userId, role, projectId }){
+        return await apiCall(`${this.route}add-member-to-project`, { userId, role, projectId }, 'POST')
+    }
+    async getUserWithPrefix({projectId, page, limit, query}){
+        const result = await apiCall(`${this.route}users-with-prefix`, {projectId, page, limit, query}, 'POST')
+        console.log(result)
+        return result
+    }
 }
 
 

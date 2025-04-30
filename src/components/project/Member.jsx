@@ -22,6 +22,7 @@ export default function ({memberId}){
             </Avatar>
             <div className="flex-1">
               <CardTitle>{member?.username}</CardTitle>
+              <CardDescription>{member?.fullName}</CardDescription>
               <CardDescription>{member?.email}</CardDescription>
               <CardDescription>Role: {member?.role}</CardDescription>
             </div>

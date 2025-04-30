@@ -2,20 +2,36 @@ import { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate, Outlet } from 'react-router-dom';
 import { DragDropContext, Draggable, Droppable } from '@hello-pangea/dnd';
 import { useFetchAllMember, useFetchProject, useFetchUserRole } from '@/api/query/useProjectQuery';
+import { useFetchUserRoles } from '@/api/query/useUserQuery';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardContent, CardTitle, CardDescription } from '@/components/ui/card';
 import Board from '@/components/project/Board';
 import BoardApi from '@/api/board';
 import ProjectApi from '@/api/project';
+import UserApi from '@/api/user';
 import TaskApi from '@/api/task';
 import DialogBox from '@/components/forms/DialogBox';
+import { Dialog } from "@radix-ui/react-dialog"
+import { DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
+import { MoreVertical, Edit, Trash } from "lucide-react";
 import { boardSchema, projectSchema } from '@/Schema';
 import Member from '@/components/project/Member';
 import { Pencil, Trash2 } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+
+const debounce = (cb, time) => {
+    let timeoutId = null
+    clearTimeout(timeoutId)
+    timeoutId = setTimeout(cb, time)
+}
 
 export default function Project() {
   const [isAddBoardDialogOpen, setIsAddBoardDialogOpen] = useState(false)
   const [isEditProjectDialogOpen, setIsEditProjectDialogOpen] = useState(false)
+  const [isInviteMemberDialogOpen, setIsInviteMemberDialogOpen] = useState(false)
+  const [inviteMemberInput, setInviteMemberInput] = useState('')
   const { projectId } = useParams();
   const {data : role} = useFetchUserRole(projectId)
   const navigate = useNavigate();
@@ -24,28 +40,48 @@ export default function Project() {
   console.log(projectMembers)
   const [localBoards, setLocalBoards] = useState(project?.boards ?? [])
   const [activeTab, setActiveTab] = useState('tasks');
-
-  const contentRef = useRef(null);
-  const [headerHeight, setHeaderHeight] = useState(0);
-  useEffect(() => {
-    if (contentRef.current) {
-      const height = contentRef.current.offsetHeight;
-      setHeaderHeight(height);
-    }
-  }, [activeTab]);
-  // Calculate available height for boards
-  const availableHeight = `calc(100vh - ${headerHeight}px - 2rem)`; // 2rem for padding
+  const [searchMembers, setSearchMembers]  = useState([])
+  const [page, setPage]  = useState(1)
+  const limit = 10
+  let maxPage =1
+  const {data:userRoles} =  useFetchUserRoles()
+  console.log(userRoles)
+  const [selectedRoles, setSelectedRoles] = useState({});
+  const [inviteSuccess, setInviteSuccess] = useState('')
+  const [inviteError, setInviteError] = useState('')
+  // const contentRef = useRef(null);
+  // const [headerHeight, setHeaderHeight] = useState(0);
+  // useEffect(() => {
+  //   if (contentRef.current) {
+  //     const height = contentRef.current.offsetHeight;
+  //     setHeaderHeight(height);
+  //   }
+  // }, [activeTab]);
+  // // Calculate available height for boards
+  // const availableHeight = `calc(100vh - ${headerHeight}px - 2rem)`; // 2rem for padding
 
   useEffect(()=>{
     if(project?.boards)
         setLocalBoards(project.boards)
   },[project?.boards])
+const getSearchMembers = async ()=>{
+    const result = await ProjectApi.getUserWithPrefix({projectId, query: inviteMemberInput, page, limit}) 
+    console.log(result)
+    maxPage = Math.ceil(result.totalCount / limit)
+    if(page>maxPage)
+        setPage(maxPage)
+    setSearchMembers(result)
+}
+const fetchMembers = () => debounce(()=>getSearchMembers(), 3000)
 
 const handleDragEnd = async (result) => {
     if (!result.destination) return;
-    
+    console.log('trying drag and drop')
     const { source, destination, draggableId, type } = result;
-    if(!role || role === 'member') return;
+    if(!role || role === 'member'){ 
+      alert("Not allowed to Perform this operation")
+      return;
+    }
 
     // Optimistic update
     if (type === 'BOARD') {
@@ -57,25 +93,31 @@ const handleDragEnd = async (result) => {
 
     try {
       if (type === 'BOARD') {
-        await BoardApi.updateBoardPosition({
+        const result = await BoardApi.updateBoardPosition({
           projectId,
           boardId: draggableId,
           newIndex: destination.index
         });
+        console.log(result)
+        if(result?.error)
+            throw result.error
       } else if (type === 'TASK') {
-        await TaskApi.updateBoardAndPosition({
+        const result = await TaskApi.updateBoardAndPosition({
           taskId: draggableId,
           boardId: source.droppableId,
           newBoardId: destination.droppableId,
           newIndex: destination.index,
           projectId,
         });
+        if(result?.error)
+          throw result.error
       }
     } catch (err) {
       // Revert on error
       if (type === 'BOARD') {
         setLocalBoards(project.boards);
       }
+      alert(err)
       console.error('Failed to update position:', err);
     }
 };
@@ -108,6 +150,25 @@ const handleDragEnd = async (result) => {
       }
     }
 }
+
+const handleSendInvite = async (memberId) => {
+  const role = selectedRoles[memberId] || userRoles[0]; // fallback to default
+  try {
+    console.log({ userId: memberId, role, projectId })
+    const result = await ProjectApi.addMemerToProject({ userId: memberId, role, projectId });
+    if (!result?.error) {
+        setInviteSuccess("Invite sent!");
+        setInviteError('')
+        return true
+      }else
+      setInviteError(result.error)
+      setInviteSuccess('');
+      return false
+  } catch (err) {
+    console.error(err);
+    // toast.error("Failed to send invite.");
+  }
+};
 
 
   if (isLoading) return <div>Loading project...</div>;
@@ -225,7 +286,7 @@ const handleDragEnd = async (result) => {
 
       {activeTab === 'members' && (
         <div className="space-y-4">
-          {role && role=='admin' && (<Button onClick={() => navigate('/members/invite')}>+ Invite Member</Button>)}
+          {role && role=='admin' && (<Button onClick={() => setIsInviteMemberDialogOpen(true)}>+ Invite Member</Button>)}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {projectMembers?.members?.map(member => (
               <Member key={member._id} memberId={member._id}/>
@@ -286,6 +347,61 @@ const handleDragEnd = async (result) => {
           handleSubmit={handleEditProjectDetails} 
           buttonText={'Save Changes'} 
         />
+        {/* Invite form */}
+        <Dialog open={isInviteMemberDialogOpen} onOpenChange={setIsInviteMemberDialogOpen}>
+          <DialogContent className="sm:max-w-md">
+            <p className='text-red-500'>{inviteError}</p>
+            <p className='text-green-500'>{inviteSuccess}</p>
+            <DialogHeader>
+              <DialogTitle>Invite Members</DialogTitle>
+            </DialogHeader>
+            <Input id='invite' type="text" placeholder="search user" value={inviteMemberInput} 
+            onInput={async (e)=>{
+              setInviteMemberInput(e.target.value)
+              setPage(1)
+              fetchMembers()
+            }} />
+            <div className='overflow-scroll max-h-80 overflow-x-hidden'>
+            {searchMembers?.users?.map(member => {
+              {console.log(member)}
+              return (<Card key={member._id} className="w-full">
+                          <CardHeader className="flex flex-row items-center space-x-4 p-4 flex-wrap justify-center">
+                            <Avatar className="h-12 w-12">
+                              <AvatarImage src={member?.avatar} />
+                              <AvatarFallback>{member?.username.charAt(0)}</AvatarFallback>
+                            </Avatar>
+                            <div className="flex flex-col">
+                              <CardTitle>{member?.fullName}</CardTitle>
+                              <CardTitle>{member?.username}</CardTitle>
+                              <CardDescription>{member?.email}</CardDescription>
+                            </div>
+                            <select
+                                value={selectedRoles[member._id] || userRoles[0]} // default to first role
+                                onChange={(e) => {
+                                  setSelectedRoles((prev) => ({
+                                    ...prev,
+                                    [member._id]: e.target.value,
+                                  }));
+                                }}
+                              >
+                                {userRoles?.map((role, index) => (
+                                  <option key={index}>{role}</option>
+                                ))}
+                              </select>
+                            <Button onClick={()=>{
+                              handleSendInvite(member._id)
+                            }}>Send</Button>
+                          </CardHeader>
+                        </Card>)
+            })}
+            </div>
+            <div className='flex justify-center'>
+                <Button disabled={page===1} onClick={()=>{setPage(page-1); fetchMembers()}} className='bg-transparent text-black'>prev</Button>
+                <span className='mx-4 mt-2'>{page}</span>
+                <Button disabled={page===maxPage} onClick={()=>{setPage(page+1);fetchMembers()}} className='bg-transparent text-black'>Next</Button>
+            </div>
+          </DialogContent>
+        </Dialog>
     </div>
   );
 }
