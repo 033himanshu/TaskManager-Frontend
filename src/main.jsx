@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.jsx'
 import {Home, Auth, Profile, ForgotPassword, ResetPassword, Project} from './pages/index.js'
+import AuthenicatedLayer from './pages/AuthenicatedLayer'
 import { createBrowserRouter, RouterProvider } from 'react-router-dom'
 import { ErrorBoundary } from "@/components/ErrorBoundary"
 const router = createBrowserRouter([
@@ -12,7 +13,9 @@ const router = createBrowserRouter([
     children : [
       {
         path : '/',
-        element : <Home />,
+        element : (<AuthenicatedLayer>
+                    <Home />
+                  </AuthenicatedLayer>),
       },
       {
         path : '/auth/forgot-password',
@@ -28,11 +31,15 @@ const router = createBrowserRouter([
       },
       {
         path : '/profile',
-        element : <Profile />,
+        element : (<AuthenicatedLayer>
+          <Profile />
+        </AuthenicatedLayer>),
       },
       {
         path : '/project/:projectId',
-        element : <Project />,
+        element : (<AuthenicatedLayer>
+          <Project />
+        </AuthenicatedLayer>),
       },
       {
         path : '*',

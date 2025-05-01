@@ -12,7 +12,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { ChevronDown, Plus } from "lucide-react"
 import { useFetchProject } from "@/api/query/useProjectQuery"
-import { useNavigate } from "react-router-dom"
+import { useNavigate, useParams } from "react-router-dom"
 
 export const ProjectDropdown = ({ projects = [] }) => {
   const [selectedProject, setSelectedProject] = useState("Select Project")
@@ -24,6 +24,8 @@ export const ProjectDropdown = ({ projects = [] }) => {
       navigate(`project/${project._id}`)
     }
   }
+  const {projectId} = useParams()
+  if(projectId)
 
   return (
     <DropdownMenu>

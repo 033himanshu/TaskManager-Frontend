@@ -49,17 +49,7 @@ export default function Project() {
   const [selectedRoles, setSelectedRoles] = useState({});
   const [inviteSuccess, setInviteSuccess] = useState('')
   const [inviteError, setInviteError] = useState('')
-  // const contentRef = useRef(null);
-  // const [headerHeight, setHeaderHeight] = useState(0);
-  // useEffect(() => {
-  //   if (contentRef.current) {
-  //     const height = contentRef.current.offsetHeight;
-  //     setHeaderHeight(height);
-  //   }
-  // }, [activeTab]);
-  // // Calculate available height for boards
-  // const availableHeight = `calc(100vh - ${headerHeight}px - 2rem)`; // 2rem for padding
-
+ 
   useEffect(()=>{
     if(project?.boards)
         setLocalBoards(project.boards)

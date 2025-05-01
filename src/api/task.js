@@ -45,6 +45,17 @@ class Task{
         }
         return result
     }
+    async updateTaskAssignedMember({projectId, boardId, taskId, memberId}){
+        console.log({projectId, boardId, taskId, memberId})
+        const result = await apiCall(`${this.route}update-assigned-member`, {projectId, boardId, taskId, memberId}, 'PATCH')
+        console.log(result)
+        if(!result.error){
+            queryClient.setQueryData(['task', { tId:taskId, bId: boardId, pId: projectId }], result)
+            // queryClient.refetchQueries(['project', { id: projectId }])
+        }
+        return result
+    }
+
     async taskDetails({taskId, boardId, projectId}){
         console.log("api call", boardId)
         const result = await apiCall(`${this.route}task-details`, {taskId, boardId, projectId}, 'POST')
