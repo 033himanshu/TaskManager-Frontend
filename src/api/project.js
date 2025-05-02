@@ -43,6 +43,10 @@ class Project{
         return result
 
     }
+    async getNote({projectId, noteId}){
+        const result = await apiCall(`${this.route}get-project-member`, {projectId, memberId}, 'POST')
+        console.log(result)
+    }
     async updateProjectDetails({name, description, projectId}){
         const result = await apiCall(`${this.route}update-project-details`, {name, description, projectId}, 'PATCH')
         if(!result.error){

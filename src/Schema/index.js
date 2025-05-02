@@ -14,3 +14,6 @@ export const taskSchema =  z.object({
   title: z.string().min(3, "Title name must be at least 3 characters"),
   description: z.string().optional(),
 })
+export const noteSchema =  z.object({
+  content: z.string().min(3, "Content must be at least 3 characters"),
+})

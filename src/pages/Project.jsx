@@ -8,18 +8,18 @@ import { Card, CardHeader, CardContent, CardTitle, CardDescription } from '@/com
 import Board from '@/components/project/Board';
 import BoardApi from '@/api/board';
 import ProjectApi from '@/api/project';
-import UserApi from '@/api/user';
 import TaskApi from '@/api/task';
+import NoteApi from '@/api/note';
 import DialogBox from '@/components/forms/DialogBox';
 import { Dialog } from "@radix-ui/react-dialog"
 import { DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
-import { MoreVertical, Edit, Trash } from "lucide-react";
-import { boardSchema, projectSchema } from '@/Schema';
+import { boardSchema, noteSchema, projectSchema } from '@/Schema';
 import Member from '@/components/project/Member';
 import { Pencil, Trash2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
+import { useFetchAllNotes } from '@/api/query/useNoteQuery';
+import NoteCard from '@/components/project/NoteCard';
 
 const debounce = (cb, time) => {
     let timeoutId = null
@@ -31,13 +31,16 @@ export default function Project() {
   const [isAddBoardDialogOpen, setIsAddBoardDialogOpen] = useState(false)
   const [isEditProjectDialogOpen, setIsEditProjectDialogOpen] = useState(false)
   const [isInviteMemberDialogOpen, setIsInviteMemberDialogOpen] = useState(false)
+  const [isAddNoteDialogOpen, setIsAddNoteDialogOpen] = useState(false)
   const [inviteMemberInput, setInviteMemberInput] = useState('')
   const { projectId } = useParams();
   const {data : role} = useFetchUserRole(projectId)
   const navigate = useNavigate();
   const { data: project, isLoading, error } = useFetchProject(projectId);
   const {data : projectMembers} = useFetchAllMember(projectId)
-  console.log(projectMembers)
+  const {data : projectNotes} = useFetchAllNotes(projectId)
+  // console.log(projectNotes)
+  // console.log(projectMembers)
   const [localBoards, setLocalBoards] = useState(project?.boards ?? [])
   const [activeTab, setActiveTab] = useState('tasks');
   const [searchMembers, setSearchMembers]  = useState([])
@@ -45,7 +48,7 @@ export default function Project() {
   const limit = 10
   let maxPage =1
   const {data:userRoles} =  useFetchUserRoles()
-  console.log(userRoles)
+  // console.log(userRoles)
   const [selectedRoles, setSelectedRoles] = useState({});
   const [inviteSuccess, setInviteSuccess] = useState('')
   const [inviteError, setInviteError] = useState('')
@@ -56,7 +59,7 @@ export default function Project() {
   },[project?.boards])
 const getSearchMembers = async ()=>{
     const result = await ProjectApi.getUserWithPrefix({projectId, query: inviteMemberInput, page, limit}) 
-    console.log(result)
+    // console.log(result)
     maxPage = Math.ceil(result.totalCount / limit)
     if(page>maxPage)
         setPage(maxPage)
@@ -141,6 +144,16 @@ const handleDragEnd = async (result) => {
     }
 }
 
+const handleAddNote = async ({content})=>{
+  // console.log("Adding Note", {content, projectId})
+  const result = await NoteApi.addNote({content, projectId})
+  if (result?.error) {
+    return result
+  } else {
+    setIsAddNoteDialogOpen(false)
+  } 
+}
+
 const handleSendInvite = async (memberId) => {
   const role = selectedRoles[memberId] || userRoles[0]; // fallback to default
   try {
@@ -163,7 +176,7 @@ const handleSendInvite = async (memberId) => {
 
   if (isLoading) return <div>Loading project...</div>;
   if (error) return <div>Error loading project: {error.message}</div>;
-  console.log(role)
+  // console.log(role)
   return (
     
     <div className="space-y-6">
@@ -250,24 +263,11 @@ const handleSendInvite = async (memberId) => {
 
       {activeTab === 'notes' && (
         <div className="space-y-4">
-          {role && role!=='member' && (<Button onClick={() => navigate('notes/new')}>+ Add Note</Button>)}
+          {role && role!=='member' && (<Button onClick={() => setIsAddNoteDialogOpen(true)}>+ Add Note</Button>)}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {project?.notes?.map(note => (
-              <Card key={note._id}>
-                <CardHeader>
-                  <CardTitle>Note</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p>{note.content}</p>
-                  {role && role!=='member' && (<Button 
-                    variant="outline" 
-                    className="mt-2"
-                    onClick={() => navigate(`notes/${note._id}/edit`)}
-                  >
-                    Edit
-                  </Button>)}
-                </CardContent>
-              </Card>
+            {projectNotes?.notes?.map(note => (
+              <NoteCard key={note} noteId={note}/>
+              // <p>{note}</p>
             ))}
           </div>
           <Outlet context={{ notes: project.notes }} />
@@ -282,10 +282,27 @@ const handleSendInvite = async (memberId) => {
               <Member key={member._id} memberId={member._id}/>
             ))}
           </div>
-          {/* <Outlet context={{ members: project.members }} /> */}
         </div>
       )}
 
+        <DialogBox  
+          isDialogOpen={isAddNoteDialogOpen} 
+          setIsDialogOpen={setIsAddNoteDialogOpen} 
+          title={'Add New Note'} 
+          schema={noteSchema} 
+          defaultValues={{
+            content : ""
+          }} 
+          fields={[
+            {
+              name: "content",
+              label: "Content",
+              placeholder: "Note goes here...",
+            },
+          ]} 
+          handleSubmit={handleAddNote} 
+          buttonText={'Add Note'} 
+        />
 
         <DialogBox  
           isDialogOpen={isAddBoardDialogOpen} 
@@ -395,3 +412,5 @@ const handleSendInvite = async (memberId) => {
     </div>
   );
 }
+
+

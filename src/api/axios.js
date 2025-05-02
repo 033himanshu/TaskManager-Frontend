@@ -78,6 +78,9 @@ const apiCall = async (route, payload = {}, method = "GET") => {
         return { error: "Unsupported request method" }
     }
     // console.log(response)
+    if(method==='DELETE' && response.status <400){
+      return {}  
+    }
     const { success, data, message } = response.data
 
     if (success) {
